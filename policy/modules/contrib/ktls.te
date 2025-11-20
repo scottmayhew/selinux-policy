@@ -1,5 +1,11 @@
 policy_module(ktls, 1.0)
 
+gen_require(`
+	type cert_t;
+	type config_home_t;
+	type passwd_file_t;
+')
+
 ########################################
 #
 # Declarations
@@ -9,6 +15,7 @@ type ktlshd_t;
 type ktlshd_exec_t;
 init_daemon_domain(ktlshd_t, ktlshd_exec_t)
 
+allow ktlshd_t self:capability net_admin;
 allow ktlshd_t self:key write;
 allow ktlshd_t self:netlink_generic_socket create_socket_perms;
 allow ktlshd_t self:netlink_route_socket r_netlink_socket_perms;
@@ -33,5 +40,18 @@ optional_policy(`
 ')
 
 optional_policy(`
+	miscfiles_map_generic_certs(ktlshd_t)
+')
+
+optional_policy(`
+	kernel_rw_key(ktlshd_t)
+')
+
+optional_policy(`
 	sysnet_read_config(ktlshd_t)
 ')
+
+dontaudit ktlshd_t cert_t:dir write;
+dontaudit ktlshd_t passwd_file_t:file read;
+dontaudit ktlshd_t self:capability { dac_override dac_read_search };
+dontaudit ktlshd_t config_home_t:dir search;
